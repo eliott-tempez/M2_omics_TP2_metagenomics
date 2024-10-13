@@ -61,7 +61,12 @@ def read_fasta(fasta_file: Path) -> str:
     :param fasta_file: (Path) Path to the fasta file.
     :return: (str) Sequence from the genome. 
     """
-    pass
+    seq = ""
+    with open(fasta_file, "r", encoding="utf-8") as f:
+        for line in f:
+            if not line.startswith(">"):
+                seq += line.strip()
+    return seq.upper()
 
 
 def find_start(start_regex: Pattern, sequence: str, start: int, stop: int) -> Union[int, None]:
@@ -73,7 +78,9 @@ def find_start(start_regex: Pattern, sequence: str, start: int, stop: int) -> Un
     :param stop: (int) Stop position of the research
     :return: (int) If exist, position of the start codon. Otherwise None. 
     """
-    pass
+    first_codon = re.search(start_regex, sequence[start:stop + 1])
+    if first_codon:
+        return first_codon.start(0)
 
 
 def find_stop(stop_regex: Pattern, sequence: str, start: int) -> Union[int, None]:
@@ -84,7 +91,17 @@ def find_stop(stop_regex: Pattern, sequence: str, start: int) -> Union[int, None
     :param start: (int) Start position of the research
     :return: (int) If exist, position of the stop codon. Otherwise None. 
     """
-    pass
+    i = start
+    while i < len(sequence) - 2:
+        match = re.search(stop_regex, sequence[i:])
+        if not match:
+            return None
+        last_index = match.start(0) + i
+        # Check if it's in the same reading frame
+        if (last_index - start) % 3 == 0:
+            return last_index
+          # Move to the next position after this codon
+        i = last_index + 1
 
 
 def has_shine_dalgarno(shine_regex: Pattern, sequence: str, start: int, max_shine_dalgarno_distance: int) -> bool:
@@ -181,8 +198,24 @@ def main() -> None: # pragma: no cover
     # Shine AGGAGGUAA
     #AGGA ou GGAGG 
     shine_regex = re.compile('A?G?GAGG|GGAG|GG.{1}GG')
+
     # Arguments
     args = get_arguments()
+    genome_file = args.genome_file
+    min_gene_len = args.min_gene_len
+    max_shine_dalgarno_distance = args.max_shine_dalgarno_distance
+    min_gap = args.min_gap
+    predicted_genes_file = args.predicted_genes_file
+    fasta_file = args.fasta_file
+
+    # Read dna sequence
+    seq = read_fasta(genome_file)
+    print(find_start(start_regex, seq, 0, 1000))
+    
+    
+    
+    
+    
     # Let us do magic in 5' to 3'
     
     # Don't forget to uncomment !!!
